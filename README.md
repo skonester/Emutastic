@@ -4,285 +4,185 @@
 [![GitHub Contributors](https://img.shields.io/github/contributors/skonester/telesto.svg)](https://github.com/skonester/telesto/graphs/contributors)
 [![GitHub Downloads](https://img.shields.io/github/downloads/skonester/telesto/total.svg)](https://github.com/skonester/telesto/releases)
 
-**Telesto** is a modern multi-system libretro emulator frontend for Windows, inspired originally by OpenEmu on macOS.
+**Telesto** is a Windows emulator frontend forked from **Emutastic**, with development focused on **Sega Saturn emulation and Ymir integration**. It retains Emutastic's multi-system libretro library, import tools, themes, and controller configuration.
 
-Named after the planet Saturn's real moon and also the name I have affecionately given the character from the iconic Sega Saturn commercials, Telesto itself orbits around interesting projects in 2026 emulation while using Emutastic as home planet.
-
-Telesto provides a sleek, unified interface for all your retro gaming needs under one easy to understand house. Built for people just want to pick up and start gaming easily.
-
-Telesto would not exist without the strong work of Emustastic bringing OpenEmu over to Windows.
+Named after Saturn's moon, Telesto builds on the work of Emutastic creator **codingncaffeine** and the OpenEmu-inspired Windows frontend. See [AUTHORS.md](AUTHORS.md) for project attribution and [CHANGELOG.md](CHANGELOG.md) for recent changes.
 
 ![Telesto Banner](Emutastic/Assets/banners%20and%20icons/emutastic-banner-scaled.png)
 
-## Features at a Glance
+## Current Status
 
-- **34+ emulated systems** across 11 manufacturers with automatic core selection.
+- **Libretro gameplay:** automatic selection from installed cores, configurable core preferences, save states, screenshots, recording, shaders, and RetroAchievements where supported by the core and game.
+- **Embedded Ymir:** experimental Saturn emulation inside a Telesto window, with software video, audio, digital pad input, and per-game backup RAM.
+- **Standalone Ymir:** an alternate Saturn launch path using Ymir's own window and controls.
 
-- **Integrated Sega Saturn emulation from fork** via the Ymir core (embedded or standalone). We want to bring more eyes to the ymir project.
+The embedded Ymir runtime was restored to the working `1f566b5` baseline after post-boot native crashes. Save-state integration, serialization work, and pause/reset toolbar changes were reverted or deferred. Embedded Ymir does **not** currently offer the full libretro gameplay feature set; see [Sega Saturn and Ymir](#sega-saturn-and-ymir).
 
-## Requirements
+## Getting Started
 
-- **Windows 10/11** (x64)
-- **.NET 8 Desktop Runtime** - [Download here](https://dotnet.microsoft.com/en-us/download/dotnet/8.0)
-- **Visual C++ Redistributable 2015–2022 (x64)** - [Download here](https://aka.ms/vs/17/release/vc_redist.x64.exe)
-- **libretro core `.dll` files** (downloadable in-app)
-- **`SDL3.dll`** (x64) for controller name detection (downloadable in-app)
-- **`ffmpeg.exe`** for video recording (downloadable in-app)
-- **DAT files** for ROM identification (downloadable in-app)
+1. Download a Windows x64 package from [Releases](https://github.com/skonester/telesto/releases), install it or extract the ZIP, and run `Telesto.exe`.
+2. Open **Preferences > Cores / Extras** to download the libretro cores you need and DAT files for ROM identification. Optional downloads include `SDL3.dll` for controller names and `ffmpeg.exe` for recording.
+3. Add BIOS files for your chosen systems to the data folder's `System` directory. **Preferences > System Files** shows BIOS status.
+4. Drag ROMs or folders onto the library, or use **Import ROMs**. Configure input in **Preferences > Controls** and choose installed backends in **Preferences > Cores / Extras**.
 
-> **Windows SmartScreen:** Telesto is not code-signed. Click **"More info"** then **"Run anyway"** on first launch.
+### Requirements
 
-## Supported Systems
+- **Windows x64.** The WPF project targets `net8.0-windows10.0.22621.0` (Windows SDK build 22621); earlier Windows builds are not an established compatibility target in this checkout.
+- **Visual C++ x64 runtime** for native emulator components: [Redistributable download](https://aka.ms/vs/17/release/vc_redist.x64.exe).
+- **.NET 8 Desktop Runtime** for framework-dependent builds. The repository's `Release-win-x64` publish profile is self-contained and includes .NET, so packages built with that profile do not require a separate .NET installation.
+- ROM/disc images, any required BIOS files, and an installed emulator backend. Ymir runtimes are supplied separately or included during packaging; the libretro downloader does not build or install the embedded Ymir wrapper.
 
-Telesto supports **34 systems across 11 manufacturers** with automatic core selection and intelligent fallback.
+## Supported Systems and Core Selection
 
-| System               | Tag          | Core (priority order)                                                    | BIOS Required            |
-| -------------------- | ------------ | ------------------------------------------------------------------------ | ------------------------ |
-| NES                  | NES          | nestopia → quicknes → fceumm                                             | No                       |
-| Famicom Disk System  | FDS          | nestopia                                                                 | `disksys.rom`            |
-| SNES                 | SNES         | snes9x → bsnes                                                           | No                       |
-| Nintendo 64          | N64          | parallel_n64 → mupen64plus_next                                          | No                       |
-| GameCube             | GameCube     | dolphin                                                                  | No                       |
-| Game Boy             | GB           | mgba → gambatte → sameboy                                                | No                       |
-| Game Boy Color       | GBC          | mgba → gambatte → sameboy                                                | No                       |
-| Game Boy Advance     | GBA          | mgba                                                                     | Optional                 |
-| Nintendo 3DS         | 3DS          | azahar                                                                   | No                       |
-| Nintendo DS          | NDS          | desmume → melonds                                                        | No                       |
-| Virtual Boy          | VirtualBoy   | mednafen_vb                                                              | No                       |
-| Genesis / Mega Drive | Genesis      | genesis_plus_gx → picodrive                                              | No                       |
-| Sega CD / Mega CD    | SegaCD       | genesis_plus_gx                                                          | Region BIOS              |
-| Sega 32X             | Sega32X      | picodrive                                                                | No                       |
-| Sega Saturn          | Saturn       | ymir (embedded) → ymir (standalone) → mednafen_saturn → kronos → yabause | Region BIOS              |
-| Master System        | SMS          | genesis_plus_gx → picodrive                                              | No                       |
-| Game Gear            | GameGear     | genesis_plus_gx                                                          | No                       |
-| SG-1000              | SG1000       | genesis_plus_gx                                                          | No                       |
-| Dreamcast            | Dreamcast    | flycast                                                                  | No                       |
-| PlayStation          | PS1          | mednafen_psx_hw → mednafen_psx                                           | Region BIOS              |
-| PSP                  | PSP          | ppsspp                                                                   | No                       |
-| TurboGrafx-16        | TG16         | mednafen_pce → mednafen_pce_fast                                         | No                       |
-| TurboGrafx-CD        | TGCD         | mednafen_pce → mednafen_pce_fast                                         | `syscard3.pce`           |
-| Neo Geo Pocket       | NGP          | mednafen_ngp                                                             | No                       |
-| Neo Geo Pocket Color | NGPC         | mednafen_ngp                                                             | No                       |
-| Neo Geo              | NeoGeo       | geolith                                                                  | `neogeo.zip` + `aes.zip` |
-| Arcade               | Arcade       | fbneo                                                                    | No                       |
-| Atari 2600           | Atari2600    | stella                                                                   | No                       |
-| Atari 7800           | Atari7800    | prosystem                                                                | No                       |
-| Atari Jaguar         | Jaguar       | virtualjaguar                                                            | No                       |
-| ColecoVision         | ColecoVision | gearcoleco → bluemsx                                                     | No                       |
-| Vectrex              | Vectrex      | vecx                                                                     | No                       |
-| 3DO                  | 3DO          | opera                                                                    | `panafz10.bin`           |
-| Philips CD-i         | CDi          | same_cdi                                                                 | No                       |
+The following table reflects the configured libretro core mappings in [CoreManager.cs](Emutastic/Services/CoreManager.cs). Names omit the `_libretro.dll` suffix. Selection uses installed cores and configured preferences; availability in this table is not a compatibility guarantee for every game.
 
-## 📁 BIOS Files
+| System | Library tag | Libretro cores, in default priority order |
+| --- | --- | --- |
+| NES | NES | nestopia, quicknes, fceumm |
+| Famicom Disk System | FDS | nestopia |
+| SNES | SNES | snes9x, bsnes |
+| Nintendo 64 | N64 | parallel_n64, mupen64plus_next |
+| GameCube | GameCube | dolphin |
+| Game Boy | GB | mgba, gambatte, sameboy |
+| Game Boy Color | GBC | mgba, gambatte, sameboy |
+| Game Boy Advance | GBA | mgba |
+| Nintendo DS | NDS | desmume, melonds |
+| Nintendo 3DS | 3DS | azahar |
+| Virtual Boy | VirtualBoy | mednafen_vb |
+| Genesis / Mega Drive | Genesis | genesis_plus_gx, picodrive |
+| Sega CD / Mega CD | SegaCD | genesis_plus_gx |
+| Sega 32X | Sega32X | picodrive |
+| Sega Saturn | Saturn | mednafen_saturn, kronos, yabause; Ymir uses separate launch paths below |
+| Master System | SMS | genesis_plus_gx, picodrive |
+| Game Gear | GameGear | genesis_plus_gx |
+| SG-1000 | SG1000 | genesis_plus_gx |
+| Dreamcast | Dreamcast | flycast |
+| PlayStation | PS1 | mednafen_psx_hw, mednafen_psx |
+| PSP | PSP | ppsspp |
+| TurboGrafx-16 | TG16 | mednafen_pce, mednafen_pce_fast |
+| TurboGrafx-CD | TGCD | mednafen_pce, mednafen_pce_fast |
+| Neo Geo Pocket / Color | NGP | mednafen_ngp |
+| Neo Geo | NeoGeo | geolith |
+| Arcade | Arcade | fbneo, mame2003_plus |
+| Atari 2600 | Atari2600 | stella |
+| Atari 7800 | Atari7800 | prosystem |
+| Atari Jaguar | Jaguar | virtualjaguar |
+| ColecoVision | ColecoVision | gearcoleco, bluemsx |
+| Vectrex | Vectrex | vecx |
+| 3DO | 3DO | opera |
+| Philips CD-i | CDi | same_cdi |
 
-Place BIOS files in `%AppData%\Telesto\System\` (or `PortableData\System\` next to the .exe in portable mode). The app also checks each system's ROM folder.
+Arcade imports can route to FBNeo or MAME 2003-Plus using DAT matches and per-game core preferences. Neo Geo Pocket `.ngp` and `.ngc` files map to `NGP` by extension; a separate `NGPC` tag exists in metadata but currently has no entry in `ConsoleCoreMap`.
 
-### System-Specific BIOS Requirements
+## BIOS Files
 
-**Sega CD** — `bios_CD_U.bin` (USA), `bios_CD_E.bin` (Europe), `bios_CD_J.bin` (Japan)
+Place BIOS files in `%AppData%\Telesto\System\`, your custom data folder's `System` directory, or `PortableData\System\` in portable mode. Libretro launch checks also search the ROM directory and its immediate subdirectories. Embedded Ymir has its own IPL lookup, so use the central `System` directory for Saturn BIOS files.
 
-**Sega Saturn** — Ymir automatically detects and copies your Saturn IPL BIOS files (`sega_101.bin`, `mpr-17933.bin`, `mpr-17941.bin`) from Telesto's central `System` directory directly into the emulator profile's `roms/ipl` subdirectory on launch.
+Telesto's configured BIOS checks include:
 
-**PlayStation** — USA: `scph5501.bin`, `scph1001.bin`, `scph7001.bin`. Europe: `scph5502.bin`. Japan: `scph5500.bin`
+| System | Filenames checked |
+| --- | --- |
+| Famicom Disk System | `disksys.rom` |
+| Sega CD | `bios_CD_U.bin`, `bios_CD_E.bin`, or `bios_CD_J.bin`, selected by game region |
+| Saturn | `sega_101.bin`, `mpr-17933.bin`, `mpr-17941.bin`; libretro checks also accept `kronos/saturn_bios.bin` |
+| PlayStation | `scph5500.bin` (Japan), `scph5501.bin` / `scph1001.bin` / `scph7001.bin` (USA), `scph5502.bin` (Europe) |
+| TurboGrafx-CD | `syscard3.pce`, `syscard2.pce`, or `syscard1.pce` |
+| 3DO | `panafz10.bin`, `panafz1j.bin`, or `goldstar.bin` |
+| Neo Geo / Geolith | Both `neogeo.zip` and `aes.zip` |
 
-**TurboGrafx-CD** — Any of: `syscard3.pce`, `syscard2.pce`, `syscard1.pce`
-
-**3DO** — Any of: `panafz10.bin` (Panasonic), `panafz1j.bin` (Japan), `goldstar.bin` (GoldStar)
-
-**Famicom Disk System** — `disksys.rom`
+These are the frontend's filename checks. Firmware requirements and accepted files also depend on the selected core and game; an unlisted system is not a promise that it needs no firmware.
 
 ## ROM Import
 
-Telesto makes importing your ROM collection simple and intelligent:
+- Drag and drop individual ROMs or folders, or use **Import ROMs**.
+- Identification uses file extensions and DAT lookups, including SHA1 matching for supported formats. Download DATs before importing for better identification.
+- Ambiguous formats such as `.chd`, `.iso`, `.cue`, and `.bin` can prompt for a console when identification does not resolve the system.
+- Recognized multi-disc sets can be bundled into one library entry by generating an `.m3u` playlist alongside the disc files. Existing hand-authored playlists are honored.
 
-- **Drag & drop** ROMs directly onto the library
-- **Automatic detection** via file extension and SHA1 lookup against DAT files
-- **Smart multi-disc bundling** (Final Fantasy VII, Metal Gear Solid, etc.) automatically creates single library entries
-- **Hand-authored `.m3u` playlists** are honored as-is
-- **Ambiguous formats** (`.chd`, `.iso`, `.cue`, `.bin`) show a console picker if no DAT match is found
+Playlist import and in-game disc swapping depend on the backend. Embedded Ymir currently has no Telesto disc-swap UI.
 
-**Important:** Download DAT files in **Preferences → Cores / Extras** before importing for best results.
+## Sega Saturn and Ymir
 
-## 🎮 Sega Saturn Emulation: Ymir Integration
+**Beetle Saturn (`mednafen_saturn`) is the first default libretro choice**, followed by Kronos and Yabause. Select **Ymir (embedded experimental)** or **Ymir (standalone fallback)** in core preferences to use Ymir. When no libretro Saturn core resolves, the game detail Play action can use an available Ymir runtime, preferring embedded over standalone. A failure after embedded startup does not automatically retry with another backend.
 
-Telesto features deep integration with the Ymir Saturn emulator core:
+### Embedded (`ymir_embedded`)
 
-### 🪐 Embedded/In-Process Core (`ymir_embedded`)
+Telesto loads `telesto-ymir-core.dll` through its managed `YmirNativeCore` adapter. This is a separate native backend, not a libretro core.
 
-- **Direct Rendering:** Software-rendered frames captured via native callbacks
-- **Integrated Audio:** Stereo sample callbacks stream directly into Telesto's audio player
-- **Unified Controls:** Native button mapping to Ymir's Saturn digital pad button masks
-- **Saves & Backups:** Automatic creation and formatting of backup RAM
-- **No Open Trays:** Automatically handles virtual disc tray after boot
+Currently implemented:
 
-### Standalone Fallback (`ymir_standalone`)
+- Software-rendered video and stereo audio in a Telesto-owned window.
+- Player-one Saturn digital pad input using controller mappings and fixed keyboard bindings: arrows, Enter, Z/X/C, A/S/D, and Q/W. Escape closes the game window.
+- Per-game internal backup RAM in `BatterySaves\Saturn\Ymir\` and a 32 Mbit backup RAM cartridge in its `Cartridges` subfolder.
+- IPL discovery from `System` and fallback `ipl.bin` files beside discovered Ymir runtimes; virtual tray closing during disc boot.
 
-- **Profile Seeding:** Clean local Ymir profile with updates disabled
-- **BIOS Synchronization:** Automatic copying of IPL BIOS files to standalone profile
+Currently missing: save-state saving/loading, the full pause overlay and pause/reset toolbar, screenshots, recording, shaders, achievements, disc-swap controls, and automatic DRAM/ROM cartridge selection. In-game backup RAM saves are separate from save states and remain supported.
 
-## Features
+### Standalone (`ymir_standalone`)
 
-### Themes
+Telesto discovers `ymir.sdl3.exe`, `ymir-sdl3.exe`, or `ymir.exe`, normally under `ymircore` beside `Telesto.exe` or under the data folder's `Native\ymircore`. The Saturn game detail menu also offers **Play with Ymir standalone** when an executable is available.
 
-- Four built-in themes: **Dark** (default), **Light**, **OLED Black**, **Midnight Blue**
-- Full visual editor with 44 color tokens and live preview
-- Custom background images with zoom, pan, and tile controls
-- Export/import themes as `.emutheme` files
+The launcher uses `--disc` and `--profile`, with the profile at `YmirProfiles\default` under the data folder. It seeds a supplied `Ymir.toml`, disables update checks and enables per-game internal backup RAM in that config, and copies missing Saturn BIOS files from `System` into the profile's `roms\ipl` directory.
 
-### Controllers
+Gameplay runs in Ymir's own window. Telesto's input mappings, overlays, capture tools, achievements, and save-state UI do not control that window.
 
-- XInput button polling during gameplay
-- SDL3 device name detection for hundreds of controllers
-- Per-controller button mapping in **Preferences → Input**
-- Falls back to generic names if `SDL3.dll` is absent
+## Frontend Features
 
-### RetroAchievements
+- **Themes:** Dark, Light, OLED Black, and Midnight Blue; a visual color editor, custom backgrounds, and `.emutheme` import/export.
+- **Controls:** keyboard configuration and XInput controller polling, with optional SDL3 device-name detection in **Preferences > Controls**.
+- **Libretro gameplay:** core options, save states, screenshots, video recording, shaders, and disk swapping on supported cores. Configure core settings in **Preferences > Core Options**.
+- **RetroAchievements:** account login in **Preferences > Achievements**, with achievement notifications for supported libretro games.
+- **About and updates:** version and credits in **Preferences > About**, with a GitHub release check and download link when a newer version is available. Updates are downloaded manually.
 
-- Earn achievements while playing via [RetroAchievements](https://retroachievements.org/)
-- Enable in **Preferences → Achievements** with your RA username and password
-- Achievements appear as toast notifications during gameplay
+The libretro gameplay features above do not imply equivalent support in embedded or standalone Ymir.
 
-### About & Updates
+## Data and Portable Mode
 
-- **Preferences → About** shows version, build date, and credits
-- Automatic GitHub release checking with manual download option
-- Notification-only — no auto-installer, no telemetry
+Normal installations keep `config.json` in `%AppData%\Telesto\`. Library data defaults to that directory and can be redirected through **Preferences > Folders**. Libretro cores normally live in `Cores` under the application base directory; they move under `PortableData` in portable mode.
 
-### Core Options
-
-- Per-core settings (internal resolution, graphics plugins, etc.)
-- Access in **Preferences → Core Options**
-
-### Disk Swapping (FDS, PS1, Saturn, Sega CD)
-
-- Press **L3 + Start** in-game to flip between discs/sides
-- Rebindable to any two-button chord in **Preferences → Controls → Disk Swap**
-- Status bar shows new disc number on each swap
-- Multi-disc games auto-bundled at import time
-
-## Folder Layout
-
-```
-Telesto.exe / rcheevos.dll / .NET runtime DLLs
-```
-
-```
-%AppData%\Telesto\          (or your custom data folder)
+```text
+<DataRoot>\
     library.db
-    Native\                   (SDL3.dll, ffmpeg.exe)
-    DATs\                     (No-Intro / Redump DATs)
-    Cores\                    (libretro core DLLs)
-    System\                   (BIOS files)
-    Save States\ / BatterySaves\ / Screenshots\ / Recordings\ / Artwork\ / ...
+    Native\                   SDL3.dll, ffmpeg.exe, optional ymircore\
+    DATs\                     ROM identification data
+    System\                   BIOS files
+    BatterySaves\             Includes Saturn\Ymir\ backup RAM
+    Save States\
+    Screenshots\
+    Recordings\
+    Artwork\
+    YmirProfiles\default\     Standalone Ymir profile
 ```
 
-### Portable mode
+To enable portable mode, create an empty `portable.txt` beside `Telesto.exe` or launch with `--portable`. Use a writable folder: config and data then live in `PortableData` beside the executable, including `Cores` and newly imported ROMs under `Roms\<Console>`. Paths inside the data root are stored relatively so they can survive drive-letter changes.
 
-Drag and drop ROMs onto the library or use **Import ROMs**. The app detects the console from file extension, cleans the title, and hashes the ROM. For ambiguous formats (`.chd`, `.iso`, `.cue`, `.bin`), a SHA1 lookup against DAT files is attempted first — if no match, a console picker is shown.
+Existing ROM references outside the data root remain absolute. Custom screenshot/recording destinations can also point elsewhere, so enabling portable mode does not by itself move every existing file onto a USB drive.
 
-**Multi-disc games** (Final Fantasy VII, Metal Gear Solid, etc.) are auto-bundled into a single library entry — drop a folder containing the disc files (`.cue`/`.bin` or `.chd`) and Telesto writes an `.m3u` playlist alongside them so the game shows up once, not three times. Hand-authored `.m3u` files in the folder are honored as-is.
+## Building from Source
 
-**Important:** Download DAT files in **Preferences → Cores / Extras** before importing. Without them, disc images and some cartridge ROMs may be assigned to the wrong system during import.
+Build on Windows with the **.NET 8 SDK**. Visual Studio 2022 with the **.NET desktop development** workload is an optional IDE. The solution and source directory retain the upstream `Emutastic` names; the output application is `Telesto.exe`.
 
----
-
-## Sega Saturn Emulation: Ymir Integration
-
-Telesto supports Sega Saturn emulation through the **Ymir** core (developed by StrikerX3). We offer two integration paths:
-
-### Embedded/In-Process Core (`ymir_embedded`)
-
-Telesto hosts the Ymir emulator in-process via a native C++ wrapper (`telesto-ymir-core.dll`) and a managed P/Invoke layer (`YmirNativeCore`).
-
-- **Direct Rendering:** Software-rendered XRGB8888 frames are captured via native callbacks and presented directly onto Telesto's `WriteableBitmap` rendering surface.
-- **Integrated Audio:** Stereo sample callbacks stream audio directly into Telesto's `AudioPlayer` queue.
-- **Unified Controls:** Native button mapping maps Telesto's user-configured input profiles directly to Ymir's internal Saturn digital pad button masks.
-- **Saves & Backups:** Automatic creation, formatting, and seeding of internal backup RAM as well as a 32 Mbit backup RAM cartridge image.
-- **No Open Trays:** Automatically handles closing the virtual disc tray after boot to bypass standard CD player BIOS screens.
-
-### Standalone Fallback (`ymir_standalone`)
-
-Launches the standalone `ymir-sdl3.exe` external emulator while keeping it aligned with Telesto.
-
-- **Profile Seeding:** Telesto automatically provisions and maintains a clean local Ymir profile directory under `YmirProfiles/default`, disabling automated update checks and enabling per-game internal backup RAM.
-- **BIOS Synchronization:** On launch, Telesto checks for your Saturn IPL BIOS files (`sega_101.bin`, `mpr-17933.bin`, `mpr-17941.bin`) in your central `System` directory and copies them directly into the standalone profile's `roms/ipl` subdirectory.
-
----
-
-## Features
-
-<details>
-<summary><strong>Themes</strong></summary>
-
-Four built-in themes: **Dark** (default), **Light**, **OLED Black**, **Midnight Blue**. Full visual editor with 44 color tokens and live preview. Set custom background images with zoom, pan, and tile controls. Export/import themes as `.emutheme` files.
-
-</details>
-
-<details>
-<summary><strong>Controllers</strong></summary>
-
-XInput button polling during gameplay with SDL3 device name detection. Xbox, DualSense/DualShock, and hundreds of other controllers are identified by product name. Button mappings configurable per-controller in **Preferences → Input**. Falls back to generic names if `SDL3.dll` is absent.
-
-</details>
-
-<details>
-<summary><strong>RetroAchievements</strong></summary>
-
-Earn achievements while playing via [RetroAchievements](https://retroachievements.org/). Enable in **Preferences → Achievements** with your RA username and password. Achievements appear as toast notifications during gameplay.
-
-</details>
-
-<details>
-<summary><strong>About & Updates</strong></summary>
-
-**Preferences → About** shows the current version, build date, and credits. On open, it checks GitHub for the latest release and surfaces a download link if a newer version is available. Notification-only — no auto-installer, no telemetry.
-
-</details>
-
-- **Core Options** — Per-core settings (internal resolution, graphics plugins, etc.) in **Preferences → Core Options**
-
-<details>
-<summary><strong>Disk Swapping (FDS, PS1, Saturn, Sega CD)</strong></summary>
-
-Press **L3 + Start** in-game to flip between discs/sides on systems that need it. Rebindable to any two-button chord (controller or keyboard) in **Preferences → Controls → Disk Swap**. The status bar shows the new disc number on each swap.
-
-Multi-disc games are auto-bundled at import time — see the [ROM Import](#rom-import) section. See the [wiki page](https://github.com/skonester/telesto/wiki/Disk-Swapping) for per-console specifics and troubleshooting.
-
-</details>
-
----
-
-## Folder Layout
-
-```
-Telesto.exe / rcheevos.dll / .NET runtime DLLs
-```
-
-```
-%AppData%\Telesto\          (or your custom data folder)
-    library.db
-    Native\                   (SDL3.dll, ffmpeg.exe — downloadable in-app)
-    DATs\                     (No-Intro / Redump DATs — downloadable in-app)
-    Cores\                    (libretro core DLLs — downloadable in-app)
-    System\                   (BIOS files)
-    Save States\ / BatterySaves\ / Screenshots\ / Recordings\ / Artwork\ / ...
-```
-
-### Portable mode
-
-Drop an empty `portable.txt` next to `Telesto.exe` **or** launch with the `--portable` command-line flag, and **everything** lives in `PortableData\` beside the .exe — config, library database, save states, battery saves, screenshots, recordings, artwork, BIOS files, libretro cores, and any ROMs you import. Move the install folder to a USB stick and run it on any Windows PC; library paths are stored relative to `PortableData\` so drive-letter changes (E:→F:) don't break anything. ROM imports are auto-copied into `PortableData\Roms\<Console>\` so they travel with the USB without setting up a separate library folder. See **[Portable Mode](https://github.com/skonester/telesto/wiki/Portable-Mode)** in the wiki for the full on-disk layout, caveats, and how to revert.
-
----
-
-## Building
-
-Requires Visual Studio 2022+ with **.NET desktop development** workload.
-
-```
-git clone <repo>
-cd Emutastic
+```powershell
+git clone https://github.com/skonester/telesto.git
+cd telesto
 dotnet build .\Emutastic.sln -c Release
 ```
+
+Publish a self-contained Windows x64 package using the checked-in profile:
+
+```powershell
+dotnet publish .\Emutastic\Emutastic.csproj /p:PublishProfile=Release-win-x64
+```
+
+Output goes to `Emutastic\bin\Publish\win-x64\`. The release workflow also downloads OpenVGDB into `Emutastic\Assets` before publishing; a plain local build does not fetch that optional database.
+
+### Including Ymir
+
+The managed build does **not** compile the native Ymir wrapper. Follow the [native wrapper build instructions](native/ymir-telesto-core/README.md) using a separate Ymir checkout, CMake 3.28+, Ninja, a C++20 toolchain, and Ymir's vcpkg dependencies.
+
+Use `native\ymir-telesto-core\build-release` as the CMake build directory (replace the native guide's `-B` and `cmake --build` paths). The app project copies `telesto-ymir-core.dll` from that directory into build/publish output **only when it already exists**. The release workflow currently has no native-wrapper build step.
+
+Standalone Ymir executables and supporting files are copied from `portable\ymircore` when present. The older `ymir-core.dll` in that payload is not the embedded `telesto-ymir-core.dll` adapter and is not copied by the app's Ymir publish rules.
 
 ---
 
@@ -291,7 +191,7 @@ dotnet build .\Emutastic.sln -c Release
 
 ### Libretro Cores
 
-Emulation is handled by libretro cores maintained by their upstream authors. Telesto bundles none of them — the in-app core manager downloads from the libretro build servers on demand. Please support these projects directly.
+Libretro cores are maintained by their upstream authors and can be downloaded through the in-app core manager. The Saturn integration also uses Ymir through a separate native wrapper or standalone executable. Please support these projects directly.
 
 | Core                                 | Upstream author(s)                                      |
 | ------------------------------------ | ------------------------------------------------------- |
@@ -346,4 +246,4 @@ Inspired by [OpenEmu](https://openemu.org/) for macOS.
 
 ## License
 
-[GNU General Public License v3.0](LICENSE)
+[GNU General Public License v3.0](LICENSE.txt)
